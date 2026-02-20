@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>جدول مذاكرة رمضان التفاعلي 🌙</title>
+    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #1a472a;
+            --secondary-color: #c9a227;
+            --bg-color: #f4f7f6;
+            --card-bg: #ffffff;
+            --text-color: #333;
+            --break-color: #fdf2f2;
+            --done-color: #e8f5e9;
+            --edit-mode-color: #fff3e0;
+        }
+
+        body {
+            font-family: 'Tajawal', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 650px;
+            background: var(--card-bg);
+            padding: 25px;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            border-top: 8px solid var(--primary-color);
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        header h1 {
+            color: var(--primary-color);
+            margin: 0;
+            font-size: 24px;
+        }
+
+        .schedule-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .schedule-table th {
+            background-color: var(--primary-color);
+            color: white;
+            padding: 12px;
+            text-align: right;
+            font-size: 14px;
+        }
+
+        .edit-mode tr.draggable {
+            cursor: move !important;
+            background-color: var(--edit-mode-color) !important;
+        }
+
+        .schedule-table tr.dragging {
+            opacity: 0.5;
+            background-color: #ffd180 !important;
+        }
+
+        .schedule-table td {
+            padding: 12px 10px;
+            border-bottom: 1px solid #eee;
+            font-size: 15px;
+        }
+
+        .time-cell {
+            font-weight: bold;
+            color: #555;
+            white-space: nowrap;
+        }
+
+        .subject-cell {
+            font-weight: 700;
+            color: var(--primary-color);
+        }
+
+        input[type="checkbox"] {
+            width: 20px;
+            height: 20px;
+            cursor: pointer;
+            accent-color: var(--primary-color);
+        }
+
+        tr.completed {
+            background-color: var(--done-color) !important;
+            opacity: 0.7;
+        }
+
+        tr.completed .subject-cell, tr.completed .time-cell {
+            text-decoration: line-through;
+            color: #888;
+        }
+
+        .row-break { background-color: var(--break-color); }
+        .row-special { background-color: #fff9e6; }
+
+        .actions {
+            text-align: center;
+            margin-top: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .btn {
+            border: none;
+            padding: 12px 25px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-family: 'Tajawal', sans-serif;
+            font-weight: bold;
+            transition: all 0.2s;
+            width: 100%;
+            max-width: 300px;
+        }
+
+        .reset-btn {
+            background-color: var(--secondary-color);
+            color: white;
+        }
+
+        .save-btn {
+            background-color: var(--primary-color);
+            color: white;
+            display: none;
+        }
+
+        .default-btn {
+            background-color: #78909c;
+            color: white;
+            font-size: 12px;
+            padding: 8px 15px;
+        }
+
+        .hint {
+            display: none;
+            margin-top: 10px;
+            font-size: 13px;
+            color: #e65100;
+            font-weight: bold;
+        }
+
+        footer {
+            margin-top: 30px;
+            text-align: center;
+            font-size: 13px;
+            color: #666;
+            border-top: 1px dashed #ccc;
+            padding-top: 15px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <header>
+        <h1>🌙 جدول مذاكرة رمضان</h1>
+        <p id="status-text">اضغط على المربع عند الإنجاز</p>
+    </header>
+
+    <table class="schedule-table" id="main-table">
+        <thead>
+            <tr>
+                <th>تم</th>
+                <th>الوقت</th>
+                <th>المادة / النشاط</th>
+                <th>المدة</th>
+            </tr>
+        </thead>
+        <tbody id="draggable-body">
+            <!-- Rows generated by JS -->
+        </tbody>
+    </table>
+
+    <div class="actions">
+        <button class="btn reset-btn" id="edit-button">إعادة ضبط وترتيب الجدول</button>
+        <button class="btn save-btn" id="save-button">حفظ الترتيب الجديد</button>
+        <button class="btn default-btn" id="default-button">العودة للجدول الطبيعي (الأصلي)</button>
+        <span class="hint" id="edit-hint">⚠️ وضع التعديل نشط: اسحب الصفوف الآن لتغيير الترتيب</span>
+    </div>
+
+    <footer>
+        "بذل الجهد في رمضان بركة في العلم والوقت"
+    </footer>
+</div>
+
+<script>
+    const tableBody = document.getElementById('draggable-body');
+    const tableElement = document.getElementById('main-table');
+    const editBtn = document.getElementById('edit-button');
+    const saveBtn = document.getElementById('save-button');
+    const defaultBtn = document.getElementById('default-button');
+    const hint = document.getElementById('edit-hint');
+    const statusText = document.getElementById('status-text');
+
+    const originalData = [
+        { type: 'study', time: '03:30 م – 04:30 م', subject: '🧪 Science', duration: '1 ساعة' },
+        { type: 'study', time: '04:30 م – 05:00 م', subject: '📐 Math', duration: '30 دقيقة' },
+        { type: 'break', time: '05:00 م – 06:15 م', subject: '❌ راحة + تجهيز فطار', duration: '—' },
+        { type: 'special', time: '06:15 م – 09:30 م', subject: '🍽️ إفطار + تراويح', duration: '—' },
+        { type: 'study', time: '09:30 م – 11:00 م', subject: '🇸🇦 لغة عربية', duration: '1.5 ساعة' },
+        { type: 'break', time: '11:00 م – 11:15 م', subject: '🥤 راحة', duration: '15 دقيقة' },
+        { type: 'study', time: '11:15 م – 12:45 ص', subject: '🧪 Science', duration: '1.5 ساعة' },
+        { type: 'break', time: '12:45 ص – 01:00 ص', subject: '🍫 راحة', duration: '15 دقيقة' },
+        { type: 'study', time: '01:00 ص – 02:15 ص', subject: '🇬🇧 English', duration: '1.25 ساعة' },
+        { type: 'break', time: '02:15 ص – 02:30 ص', subject: '🥛 راحة', duration: '15 دقيقة' },
+        { type: 'study', time: '02:30 ص – 03:30 ص', subject: '🇸🇦 لغة عربية', duration: '1 ساعة' },
+        { type: 'study', time: '03:30 ص – 04:00 ص', subject: '📐 Math', duration: '30 دقيقة' },
+        { type: 'special', time: '04:00 ص →', subject: '🌄 سحور + فجر', duration: '—' }
+    ];
+
+    function renderTable(data) {
+        tableBody.innerHTML = '';
+        data.forEach(item => {
+            const tr = document.createElement('tr');
+            tr.className = 'draggable';
+            if (item.type === 'break') tr.classList.add('row-break');
+            if (item.type === 'special') tr.classList.add('row-special');
+            tr.setAttribute('draggable', 'false');
+
+            const isStudy = item.type === 'study' || item.type === 'special' ? false : false;
+            // Only show checkbox for study rows
+            const showCheck = item.type === 'study';
+
+            tr.innerHTML = `
+                <td>${showCheck ? '<input type="checkbox" onchange="toggleRow(this)">' : '-'}</td>
+                <td class="time-cell">${item.time}</td>
+                <td class="subject-cell">${item.subject}</td>
+                <td class="duration-cell">${item.duration}</td>
+            `;
+            tableBody.appendChild(tr);
+        });
+    }
+
+    renderTable(originalData);
+
+    function toggleRow(checkbox) {
+        const row = checkbox.closest('tr');
+        row.classList.toggle('completed', checkbox.checked);
+    }
+
+    // تفعيل السحب والإفلات
+    let draggingRow = null;
+
+    tableBody.addEventListener('dragstart', e => {
+        if (tableElement.classList.contains('edit-mode')) {
+            draggingRow = e.target.closest('tr');
+            draggingRow.classList.add('dragging');
+        } else {
+            e.preventDefault();
+        }
+    });
+
+    tableBody.addEventListener('dragend', () => {
+        if (draggingRow) {
+            draggingRow.classList.remove('dragging');
+            draggingRow = null;
+        }
+    });
+
+    tableBody.addEventListener('dragover', e => {
+        e.preventDefault();
+        if (!tableElement.classList.contains('edit-mode')) return;
+        const afterElement = getDragAfterElement(tableBody, e.clientY);
+        if (afterElement == null) {
+            tableBody.appendChild(draggingRow);
+        } else {
+            tableBody.insertBefore(draggingRow, afterElement);
+        }
+    });
+
+    function getDragAfterElement(container, y) {
+        const draggableElements = [...container.querySelectorAll('.draggable:not(.dragging)')];
+        return draggableElements.reduce((closest, child) => {
+            const box = child.getBoundingClientRect();
+            const offset = y - box.top - box.height / 2;
+            if (offset < 0 && offset > closest.offset) {
+                return { offset: offset, element: child };
+            } else {
+                return closest;
+            }
+        }, { offset: Number.NEGATIVE_INFINITY }).element;
+    }
+
+    // أزرار التحكم
+    editBtn.addEventListener('click', () => {
+        const checkboxes = document.querySelectorAll('input[type="checkbox"]');
+        checkboxes.forEach(cb => {
+            cb.checked = false;
+            cb.closest('tr').classList.remove('completed');
+        });
+
+        tableElement.classList.add('edit-mode');
+        document.querySelectorAll('.draggable').forEach(row => row.setAttribute('draggable', 'true'));
+
+        editBtn.style.display = 'none';
+        saveBtn.style.display = 'block';
+        hint.style.display = 'block';
+        statusText.innerText = "وضع التعديل: اسحب الصفوف الآن";
+    });
+
+    saveBtn.addEventListener('click', () => {
+        tableElement.classList.remove('edit-mode');
+        document.querySelectorAll('.draggable').forEach(row => row.setAttribute('draggable', 'false'));
+
+        saveBtn.style.display = 'none';
+        editBtn.style.display = 'block';
+        hint.style.display = 'none';
+        statusText.innerText = "تم حفظ الترتيب!";
+    });
+
+    defaultBtn.addEventListener('click', () => {
+        // العودة للبيانات الأصلية فوراً
+        renderTable(originalData);
+        
+        // إعادة ضبط الحالة (القفل)
+        tableElement.classList.remove('edit-mode');
+        editBtn.style.display = 'block';
+        saveBtn.style.display = 'none';
+        hint.style.display = 'none';
+        statusText.innerText = "تم استعادة الجدول الأصلي";
+    });
+</script>
+</body>
+</html>
