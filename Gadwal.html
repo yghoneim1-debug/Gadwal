@@ -170,7 +170,7 @@
 <div class="container">
     <header>
         <h1>🌙 جدول مذاكرة رمضان</h1>
-        <p id="status-text">اضغط على المربع عند الإنجاز</p>
+        <p id="status-text">من الظهر حتى المساء</p>
     </header>
 
     <table class="schedule-table" id="main-table">
@@ -191,7 +191,7 @@
         <button class="btn reset-btn" id="edit-button">إعادة ضبط وترتيب الجدول</button>
         <button class="btn save-btn" id="save-button">حفظ الترتيب الجديد</button>
         <button class="btn default-btn" id="default-button">العودة للجدول الطبيعي (الأصلي)</button>
-        <span class="hint" id="edit-hint">⚠️ وضع التعديل نشط: اسحب الصفوف الآن لتغيير الترتيب</span>
+        <span class="hint" id="edit-hint">⚠️ وضع التعديل نشط: اسحب الصفوف الآن</span>
     </div>
 
     <footer>
@@ -209,19 +209,15 @@
     const statusText = document.getElementById('status-text');
 
     const originalData = [
-        { type: 'study', time: '03:30 م – 04:30 م', subject: '🧪 Science', duration: '1 ساعة' },
-        { type: 'study', time: '04:30 م – 05:00 م', subject: '📐 Math', duration: '30 دقيقة' },
-        { type: 'break', time: '05:00 م – 06:15 م', subject: '❌ راحة + تجهيز فطار', duration: '—' },
-        { type: 'special', time: '06:15 م – 09:30 م', subject: '🍽️ إفطار + تراويح', duration: '—' },
-        { type: 'study', time: '09:30 م – 11:00 م', subject: '🇸🇦 لغة عربية', duration: '1.5 ساعة' },
-        { type: 'break', time: '11:00 م – 11:15 م', subject: '🥤 راحة', duration: '15 دقيقة' },
-        { type: 'study', time: '11:15 م – 12:45 ص', subject: '🧪 Science', duration: '1.5 ساعة' },
-        { type: 'break', time: '12:45 ص – 01:00 ص', subject: '🍫 راحة', duration: '15 دقيقة' },
-        { type: 'study', time: '01:00 ص – 02:15 ص', subject: '🇬🇧 English', duration: '1.25 ساعة' },
-        { type: 'break', time: '02:15 ص – 02:30 ص', subject: '🥛 راحة', duration: '15 دقيقة' },
-        { type: 'study', time: '02:30 ص – 03:30 ص', subject: '🇸🇦 لغة عربية', duration: '1 ساعة' },
-        { type: 'study', time: '03:30 ص – 04:00 ص', subject: '📐 Math', duration: '30 دقيقة' },
-        { type: 'special', time: '04:00 ص →', subject: '🌄 سحور + فجر', duration: '—' }
+        { type: 'study', time: '12:00 م – 01:30 م', subject: '🧪 Science', duration: '1.5 ساعة' },
+        { type: 'study', time: '01:30 م – 03:00 م', subject: '📐 Math', duration: '1.5 ساعة' },
+        { type: 'break', time: '03:00 م – 03:30 م', subject: '🥤 استراحة صلاة الظهر', duration: '30 دقيقة' },
+        { type: 'study', time: '03:30 م – 05:00 م', subject: '🇸🇦 لغة عربية', duration: '1.5 ساعة' },
+        { type: 'break', time: '05:00 م – 06:15 م', subject: '❌ راحة + تجهيز فطار', duration: '1.25 ساعة' },
+        { type: 'special', time: '06:15 م – 07:30 م', subject: '🍽️ إفطار وصلاة المغرب', duration: '1.25 ساعة' },
+        { type: 'study', time: '07:30 م – 09:00 م', subject: '🇬🇧 English', duration: '1.5 ساعة' },
+        { type: 'study', time: '09:00 م – 10:00 م', subject: '📝 مراجعة عامة', duration: '1 ساعة' },
+        { type: 'special', time: '10:00 م →', subject: '🌙 نهاية اليوم الدراسي', duration: '—' }
     ];
 
     function renderTable(data) {
@@ -233,8 +229,6 @@
             if (item.type === 'special') tr.classList.add('row-special');
             tr.setAttribute('draggable', 'false');
 
-            const isStudy = item.type === 'study' || item.type === 'special' ? false : false;
-            // Only show checkbox for study rows
             const showCheck = item.type === 'study';
 
             tr.innerHTML = `
@@ -254,7 +248,6 @@
         row.classList.toggle('completed', checkbox.checked);
     }
 
-    // تفعيل السحب والإفلات
     let draggingRow = null;
 
     tableBody.addEventListener('dragstart', e => {
@@ -297,7 +290,6 @@
         }, { offset: Number.NEGATIVE_INFINITY }).element;
     }
 
-    // أزرار التحكم
     editBtn.addEventListener('click', () => {
         const checkboxes = document.querySelectorAll('input[type="checkbox"]');
         checkboxes.forEach(cb => {
@@ -321,14 +313,11 @@
         saveBtn.style.display = 'none';
         editBtn.style.display = 'block';
         hint.style.display = 'none';
-        statusText.innerText = "تم حفظ الترتيب!";
+        statusText.innerText = "تم حفظ الترتيب الجديد!";
     });
 
     defaultBtn.addEventListener('click', () => {
-        // العودة للبيانات الأصلية فوراً
         renderTable(originalData);
-        
-        // إعادة ضبط الحالة (القفل)
         tableElement.classList.remove('edit-mode');
         editBtn.style.display = 'block';
         saveBtn.style.display = 'none';
